@@ -1,0 +1,8 @@
+[window]
+padding = { x = 10, y = 10 }
+opacity = 0.9
+decorations = "Full"
+
+[font]
+normal = { family = "MesloLGS NF", style = "Regular" }
+size = 12.0

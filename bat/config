@@ -1,0 +1,14 @@
+# bat configuration file
+# For more info: bat --help or https://github.com/sharkdp/bat
+
+# Set the theme. Run `bat --list-themes` to see available themes.
+--theme="TwoDark"
+
+# Show line numbers, git status modifications, and file headers.
+--style="numbers,changes,header"
+
+# Enable italic text in the terminal.
+--italic-text=always
+
+# Use page navigation (less) for long outputs.
+--pager="less --quit-if-one-screen --RAW-CONTROL-CHARS"
