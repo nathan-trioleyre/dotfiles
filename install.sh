@@ -149,7 +149,24 @@ else
     log_info "bat command is already installed."
 fi
 
-# 6. Alacritty Setup
+# 6. Exa command Setup
+if ! command_exists exa; then
+    echo -e -n "${YELLOW}[QUESTION]${NC} exa command not found. Would you like to install it? (y/n) "
+    read -r install_exa
+    if [[ "$install_exa" =~ ^[Yy]$ ]]; then
+        if command_exists cargo; then
+            log_info "Installing exa via Cargo..."
+            cargo install exa
+            log_success "exa installed via Cargo."
+        else
+            log_warning "Cargo not found. Please install exa manually or install Rust first."
+        fi
+    fi
+else
+    log_info "exa command is already installed."
+fi
+
+# 7. Alacritty Setup
 if ! command_exists alacritty; then
     log_warning "Alacritty is not installed. You can install it via:"
     log_warning " - Debian/Ubuntu: sudo apt install alacritty"
@@ -159,7 +176,27 @@ else
     log_info "Alacritty is already installed."
 fi
 
-# 7. Symlink Configuration Files
+# 8. fzf Setup
+if ! command_exists fzf; then
+    echo -e -n "${YELLOW}[QUESTION]${NC} fzf command not found. Would you like to install it? (y/n) "
+    read -r install_fzf
+    if [[ "$install_fzf" =~ ^[Yy]$ ]]; then
+        if [ ! -d "$HOME/.fzf" ]; then
+            log_info "Cloning fzf repository..."
+            git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+            log_info "Installing fzf binary..."
+            "$HOME/.fzf/install" --bin
+            log_success "fzf installed successfully."
+        else
+            log_info "fzf repository already present. Running install script..."
+            "$HOME/.fzf/install" --bin
+        fi
+    fi
+else
+    log_info "fzf command is already installed."
+fi
+
+# 9. Symlink Configuration Files
 echo ""
 log_info "Configuring symlinks..."
 
