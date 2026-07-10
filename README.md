@@ -4,10 +4,11 @@
 
 - **Terminal:** [Alacritty](https://alacritty.org/) (Configured with MesloLGS NF for Powerlevel10k, 0.9 opacity, internal padding)
 - **Shell:** [Zsh](https://www.zsh.org/) + [Oh My Zsh](https://ohmyz.sh/) + [Powerlevel10k](https://github.com/romkatv/powerlevel10k) theme
-- **Zsh Plugins:** `git`, `zsh-autosuggestions`, `zsh-syntax-highlighting`
+- **Zsh Plugins:** `git`, `fzf`, `fzf-tab`, `zsh-autosuggestions`, `zsh-syntax-highlighting`
 - **Rust Utilities:**
   - [bat](https://github.com/sharkdp/bat) (A modern alternative to `cat` with syntax highlighting, default theme configured to *TwoDark*)
-  - [exa](https://github.com/ogham/exa) (A modern replacement for `ls` with colors and icons, aliased as `ls="exa -F --icons"`)
+  - [eza](https://github.com/eza-community/eza) (A modern replacement for `ls` with colors and icons, aliased as `ls="eza -F --icons"`)
+  - [tealdeer](https://github.com/dbrgn/tealdeer) (A fast, offline implementation of `tldr` in Rust)
 
 ---
 
@@ -21,8 +22,8 @@ cd ~/Documents/dev/dotfiles # Or your cloned folder
 ```
 
 ### What the script does automatically:
-1. **Oh My Zsh & Theme:** Installs Oh My Zsh if necessary, clones the Powerlevel10k theme, as well as the autosuggestions and syntax highlighting plugins.
-2. **Rust & Utilities:** Detects the presence of Rust/Cargo, `bat`, and `exa`, and offers to install them if they are missing.
+1. **Oh My Zsh & Theme:** Installs Oh My Zsh if necessary, clones the Powerlevel10k theme, as well as the autosuggestions, syntax highlighting, and fzf-tab plugins.
+2. **Rust & Utilities:** Detects the presence of Rust/Cargo, `bat`, `eza`, and `tealdeer` (tldr), and offers to install them if they are missing.
 3. **Backup / Safety:** If a configuration file already exists locally (e.g. `~/.zshrc`), the script renames it to a `.bak` file (e.g., `~/.zshrc.bak.20260710123456`) before creating the symbolic link, guaranteeing **no data loss**.
 4. **Symbolic Links:** Creates symbolic links pointing to the repository's configurations:
    - `~/.zshrc` ➔ `zsh/zshrc`

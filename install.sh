@@ -115,6 +115,15 @@ else
     log_info "zsh-syntax-highlighting plugin already present."
 fi
 
+# Plugins: fzf-tab
+if [ ! -d "${ZSH_CUSTOM}/plugins/fzf-tab" ]; then
+    log_info "Cloning fzf-tab plugin..."
+    git clone https://github.com/Aloxaf/fzf-tab "${ZSH_CUSTOM}/plugins/fzf-tab"
+    log_success "fzf-tab plugin cloned."
+else
+    log_info "fzf-tab plugin already present."
+fi
+
 # 4. Rust Toolchain Setup
 if ! command_exists rustup; then
     echo -e -n "${YELLOW}[QUESTION]${NC} Rust/rustup not found. Would you like to install it? (y/n) "
@@ -149,24 +158,49 @@ else
     log_info "bat command is already installed."
 fi
 
-# 6. Exa command Setup
-if ! command_exists exa; then
-    echo -e -n "${YELLOW}[QUESTION]${NC} exa command not found. Would you like to install it? (y/n) "
-    read -r install_exa
-    if [[ "$install_exa" =~ ^[Yy]$ ]]; then
+# 6. Eza command Setup
+if ! command_exists eza; then
+    echo -e -n "${YELLOW}[QUESTION]${NC} eza command not found. Would you like to install it? (y/n) "
+    read -r install_eza
+    if [[ "$install_eza" =~ ^[Yy]$ ]]; then
         if command_exists cargo; then
-            log_info "Installing exa via Cargo..."
-            cargo install exa
-            log_success "exa installed via Cargo."
+            log_info "Installing eza via Cargo..."
+            cargo install eza
+            log_success "eza installed via Cargo."
         else
-            log_warning "Cargo not found. Please install exa manually or install Rust first."
+            log_warning "Cargo not found. Please install eza manually or install Rust first."
         fi
     fi
 else
-    log_info "exa command is already installed."
+    log_info "eza command is already installed."
 fi
 
-# 7. Alacritty Setup
+# 7. Tealdeer command Setup
+if ! command_exists tldr; then
+    echo -e -n "${YELLOW}[QUESTION]${NC} tldr command (tealdeer) not found. Would you like to install it? (y/n) "
+    read -r install_tealdeer
+    if [[ "$install_tealdeer" =~ ^[Yy]$ ]]; then
+        if command_exists cargo; then
+            log_info "Installing tealdeer via Cargo..."
+            cargo install tealdeer
+            log_success "tealdeer installed via Cargo."
+            log_info "Updating tldr cache..."
+            if command_exists tldr; then
+                tldr --update || log_warning "Failed to update tldr cache."
+            elif [ -f "$HOME/.cargo/bin/tldr" ]; then
+                "$HOME/.cargo/bin/tldr" --update || log_warning "Failed to update tldr cache."
+            else
+                log_warning "tldr executable not found in PATH or ~/.cargo/bin/ to update cache."
+            fi
+        else
+            log_warning "Cargo not found. Please install tealdeer manually or install Rust first."
+        fi
+    fi
+else
+    log_info "tldr command (tealdeer) is already installed."
+fi
+
+# 8. Alacritty Setup
 if ! command_exists alacritty; then
     log_warning "Alacritty is not installed. You can install it via:"
     log_warning " - Debian/Ubuntu: sudo apt install alacritty"
@@ -176,7 +210,7 @@ else
     log_info "Alacritty is already installed."
 fi
 
-# 8. fzf Setup
+# 9. fzf Setup
 if ! command_exists fzf; then
     echo -e -n "${YELLOW}[QUESTION]${NC} fzf command not found. Would you like to install it? (y/n) "
     read -r install_fzf
@@ -196,7 +230,7 @@ else
     log_info "fzf command is already installed."
 fi
 
-# 9. Symlink Configuration Files
+# 10. Symlink Configuration Files
 echo ""
 log_info "Configuring symlinks..."
 
