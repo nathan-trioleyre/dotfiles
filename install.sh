@@ -299,7 +299,28 @@ else
     log_info "fzf command is already installed."
 fi
 
-# 10. Symlink Configuration Files
+# 10. nvm (Node.js version manager) Setup
+NVM_VERSION="v0.40.8"
+NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+    if ask "nvm (Node.js version manager) not found. Would you like to install it with the latest Node.js LTS?"; then
+        log_info "Installing nvm $NVM_VERSION..."
+        # Loaded by the Oh My Zsh nvm plugin, so the installer must not edit shell files
+        curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | PROFILE=/dev/null bash
+        log_info "Installing Node.js LTS..."
+        # nvm does not support `set -u`
+        set +u
+        # shellcheck source=/dev/null
+        source "$NVM_DIR/nvm.sh"
+        nvm install --lts
+        set -u
+        log_success "nvm and Node.js LTS installed."
+    fi
+else
+    log_info "nvm is already installed."
+fi
+
+# 11. Symlink Configuration Files
 echo ""
 log_info "Configuring symlinks..."
 

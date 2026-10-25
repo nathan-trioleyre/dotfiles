@@ -4,12 +4,13 @@
 
 - **Terminal:** [Alacritty](https://alacritty.org/) (MesloLGS NF font, Snazzy color scheme, 0.9 opacity, internal padding)
 - **Shell:** [Zsh](https://www.zsh.org/) + [Oh My Zsh](https://ohmyz.sh/) + [Powerlevel10k](https://github.com/romkatv/powerlevel10k) theme
-- **Zsh Plugins:** `git`, `fzf`, `fzf-tab` (with directory previews), `zsh-autosuggestions`, `zsh-syntax-highlighting`
+- **Zsh Plugins:** `git`, `fzf`, `fzf-tab` (with directory previews), `nvm`, `zsh-autosuggestions`, `zsh-syntax-highlighting`
 - **CLI Utilities:**
   - [bat](https://github.com/sharkdp/bat) (A modern alternative to `cat` with syntax highlighting, using the terminal palette, aliased as `cat`)
   - [eza](https://github.com/eza-community/eza) (A modern replacement for `ls` with colors and icons, aliased as `ls="eza -F --icons"`)
   - [tealdeer](https://github.com/dbrgn/tealdeer) (A fast, offline implementation of `tldr` in Rust)
   - [fzf](https://github.com/junegunn/fzf) (Fuzzy finder)
+  - [nvm](https://github.com/nvm-sh/nvm) (Node.js version manager, loaded by the Oh My Zsh `nvm` plugin)
 
 ---
 
@@ -30,8 +31,9 @@ Only `git` and `curl` are required beforehand.
 2. **Oh My Zsh & Theme:** Installs Oh My Zsh if necessary, clones the Powerlevel10k theme, as well as the autosuggestions, syntax highlighting, and fzf-tab plugins.
 3. **Font:** Downloads the MesloLGS NF font required by Powerlevel10k and the eza icons.
 4. **Utilities:** Detects `bat`, `eza`, `tealdeer` (tldr), `alacritty` and `fzf`, and offers to install the missing ones with your system package manager (`apt`, `pacman`, `dnf` or `brew`). If that fails, it falls back to Cargo, installing Rust first if you agree.
-5. **Backup / Safety:** If a configuration file already exists locally (e.g. `~/.zshrc`), the script renames it to a `.bak` file (e.g., `~/.zshrc.bak.20260710123456`) before creating the symbolic link, guaranteeing **no data loss**.
-6. **Symbolic Links:** Creates symbolic links pointing to the repository's configurations:
+5. **Node.js:** Offers to install [nvm](https://github.com/nvm-sh/nvm) and the latest Node.js LTS. The installer is told not to edit shell files: the Oh My Zsh `nvm` plugin loads it.
+6. **Backup / Safety:** If a configuration file already exists locally (e.g. `~/.zshrc`), the script renames it to a `.bak` file (e.g., `~/.zshrc.bak.20260710123456`) before creating the symbolic link, guaranteeing **no data loss**.
+7. **Symbolic Links:** Creates symbolic links pointing to the repository's configurations:
    - `~/.zshenv` ➔ `zsh/zshenv`
    - `~/.zshrc` ➔ `zsh/zshrc`
    - `~/.p10k.zsh` ➔ `zsh/p10k.zsh`
@@ -65,7 +67,7 @@ dotfiles/
 │   └── system_actions       # COSMIC system actions (Super+T opens Alacritty)
 ├── zsh/
 │   ├── zshenv               # Environment variables (PATH, Cargo)
-│   ├── zshrc                # Zsh configuration (Oh My Zsh, plugins, aliases)
+│   ├── zshrc                # Zsh configuration (Oh My Zsh, plugins, nvm, aliases)
 │   └── p10k.zsh             # Powerlevel10k prompt configuration
 ├── install.sh               # Automated installation script
 ├── update.sh                # Updates Oh My Zsh, plugins and tldr cache
