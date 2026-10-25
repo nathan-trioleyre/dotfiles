@@ -1,0 +1,5 @@
+{
+    /// Locks the session (Super+L, like Windows). Replaces the default Focus(Right),
+    /// which stays available on Super+Right.
+    (modifiers: [Super], key: "l"): System(LockScreen),
+}

@@ -40,6 +40,7 @@ Only `git` and `curl` are required beforehand.
    - `~/.config/alacritty/alacritty.toml` ➔ `alacritty/alacritty.toml`
    - `~/.config/bat/config` ➔ `bat/config`
    - `~/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/system_actions` ➔ `cosmic/system_actions` (only on the COSMIC desktop, makes `Super+T` open Alacritty)
+   - `~/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom` ➔ `cosmic/custom` (only on the COSMIC desktop, makes `Super+L` lock the session)
 
 The script is idempotent: running it again only does what is missing.
 
@@ -64,6 +65,7 @@ dotfiles/
 ├── bat/
 │   └── config               # bat configuration (theme, style, etc.)
 ├── cosmic/
+│   ├── custom               # COSMIC custom shortcuts (Super+L locks the session)
 │   └── system_actions       # COSMIC system actions (Super+T opens Alacritty)
 ├── zsh/
 │   ├── zshenv               # Environment variables (PATH, Cargo)

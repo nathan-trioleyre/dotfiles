@@ -330,9 +330,10 @@ create_symlink "${DOTFILES_DIR}/zsh/p10k.zsh" "${HOME}/.p10k.zsh"
 create_symlink "${DOTFILES_DIR}/alacritty/alacritty.toml" "${HOME}/.config/alacritty/alacritty.toml"
 create_symlink "${DOTFILES_DIR}/bat/config" "${HOME}/.config/bat/config"
 
-# COSMIC desktop: open Alacritty with Super+T
+# COSMIC desktop: open Alacritty with Super+T, lock the session with Super+L
 if [ "${XDG_CURRENT_DESKTOP:-}" = "COSMIC" ] || [ -d "${HOME}/.config/cosmic" ]; then
     create_symlink "${DOTFILES_DIR}/cosmic/system_actions" "${HOME}/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/system_actions"
+    create_symlink "${DOTFILES_DIR}/cosmic/custom" "${HOME}/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom"
 fi
 
 echo ""
