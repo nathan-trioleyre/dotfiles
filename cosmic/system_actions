@@ -1,0 +1,4 @@
+{
+    /// Opens the terminal (Super+T)
+    Terminal: "alacritty",
+}

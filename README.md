@@ -37,6 +37,7 @@ Only `git` and `curl` are required beforehand.
    - `~/.p10k.zsh` ➔ `zsh/p10k.zsh`
    - `~/.config/alacritty/alacritty.toml` ➔ `alacritty/alacritty.toml`
    - `~/.config/bat/config` ➔ `bat/config`
+   - `~/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/system_actions` ➔ `cosmic/system_actions` (only on the COSMIC desktop, makes `Super+T` open Alacritty)
 
 The script is idempotent: running it again only does what is missing.
 
@@ -60,6 +61,8 @@ dotfiles/
 │   └── alacritty.toml       # Alacritty configuration (font, colors, window)
 ├── bat/
 │   └── config               # bat configuration (theme, style, etc.)
+├── cosmic/
+│   └── system_actions       # COSMIC system actions (Super+T opens Alacritty)
 ├── zsh/
 │   ├── zshenv               # Environment variables (PATH, Cargo)
 │   ├── zshrc                # Zsh configuration (Oh My Zsh, plugins, aliases)
