@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Exit immediately if a command exits with a non-zero status
-set -e
+# Exit on errors, unset variables and failed pipes
+set -euo pipefail
 
 # Setup colors
 NC='\033[0m'
@@ -30,16 +30,95 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Ask a yes/no question, succeed on "y"
+ask() {
+    local reply
+    echo -e -n "${YELLOW}[QUESTION]${NC} $1 (y/n) "
+    read -r reply
+    [[ "$reply" =~ ^[Yy]$ ]]
+}
+
 # Functions to check dependencies
 command_exists() {
     command -v "$1" >/dev/null 2>&1
+}
+
+# Detect the system package manager
+PKG_MANAGER=""
+for pm in apt-get pacman dnf brew; do
+    if command_exists "$pm"; then
+        PKG_MANAGER="$pm"
+        break
+    fi
+done
+APT_UPDATED=0
+
+# Install packages with the system package manager
+pkg_install() {
+    case "$PKG_MANAGER" in
+        apt-get)
+            if [ "$APT_UPDATED" -eq 0 ]; then
+                sudo apt-get update && APT_UPDATED=1
+            fi
+            sudo apt-get install -y "$@"
+            ;;
+        pacman) sudo pacman -S --needed --noconfirm "$@" ;;
+        dnf) sudo dnf install -y "$@" ;;
+        brew) brew install "$@" ;;
+        *) return 1 ;;
+    esac
+}
+
+# Make cargo available, offering to install Rust via rustup
+ensure_cargo() {
+    if command_exists cargo; then
+        return 0
+    fi
+    if ask "Cargo is required as a fallback but Rust/rustup is not installed. Install it?"; then
+        log_info "Installing Rust via rustup..."
+        # PATH is handled by zsh/zshenv, so rustup must not edit shell files
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+        # shellcheck source=/dev/null
+        source "$HOME/.cargo/env"
+        log_success "Rust installed successfully."
+        return 0
+    fi
+    log_warning "Skipping Rust installation."
+    return 1
+}
+
+# Install a tool with the package manager, falling back to cargo
+# Usage: install_tool <package> <crate>
+install_tool() {
+    local package="$1"
+    local crate="$2"
+
+    if [ -n "$PKG_MANAGER" ]; then
+        log_info "Installing $package via $PKG_MANAGER..."
+        if pkg_install "$package"; then
+            log_success "$package installed via $PKG_MANAGER."
+            return 0
+        fi
+        log_warning "Could not install $package via $PKG_MANAGER, trying Cargo."
+    fi
+
+    if ensure_cargo; then
+        log_info "Installing $crate via Cargo..."
+        cargo install --locked "$crate"
+        log_success "$crate installed via Cargo."
+        return 0
+    fi
+
+    log_warning "Please install $package manually."
+    return 1
 }
 
 # Create backup of a file/directory
 backup_file() {
     local target="$1"
     if [ -e "$target" ] && [ ! -L "$target" ]; then
-        local backup="${target}.bak.$(date +%Y%m%d%H%M%S)"
+        local backup
+        backup="${target}.bak.$(date +%Y%m%d%H%M%S)"
         log_warning "Backing up existing $target to $backup"
         mv "$target" "$backup"
     elif [ -L "$target" ]; then
@@ -52,12 +131,17 @@ backup_file() {
 create_symlink() {
     local source="$1"
     local target="$2"
-    
+
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+        log_info "Symlink already up to date: $target"
+        return 0
+    fi
+
     # Ensure target parent directory exists
     mkdir -p "$(dirname "$target")"
-    
+
     backup_file "$target"
-    
+
     log_info "Symlinking $source -> $target"
     ln -s "$source" "$target"
 }
@@ -66,12 +150,34 @@ echo -e "${CYAN}=============================================${NC}"
 echo -e "${CYAN}    Dotfiles Setup & Installation Script     ${NC}"
 echo -e "${CYAN}=============================================${NC}"
 
+# 0. Required tools
+for cmd in git curl; do
+    if ! command_exists "$cmd"; then
+        log_error "$cmd is required. Please install it with your system package manager."
+        exit 1
+    fi
+done
+
 # 1. Zsh Setup
 if ! command_exists zsh; then
-    log_warning "Zsh is not installed. Please install it using your system package manager."
-    log_warning "Example: sudo apt install zsh (Debian/Ubuntu) or sudo pacman -S zsh (Arch)"
+    if ask "Zsh is not installed. Install it?" && pkg_install zsh; then
+        log_success "Zsh installed successfully."
+    else
+        log_error "Zsh is required. Please install it with your system package manager."
+        exit 1
+    fi
 else
     log_info "Zsh is already installed."
+fi
+
+ZSH_PATH="$(command -v zsh)"
+if [ "$(basename "${SHELL:-}")" != "zsh" ]; then
+    if ask "Your default shell is ${SHELL:-unknown}. Make zsh your default shell?"; then
+        chsh -s "$ZSH_PATH"
+        log_success "Default shell changed to $ZSH_PATH (effective at next login)."
+    fi
+else
+    log_info "Zsh is already the default shell."
 fi
 
 # 2. Oh My Zsh Setup
@@ -88,71 +194,56 @@ fi
 ZSH_CUSTOM="${OMZ_DIR}/custom"
 mkdir -p "${ZSH_CUSTOM}/plugins" "${ZSH_CUSTOM}/themes"
 
-# Powerlevel10k Theme
-if [ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]; then
-    log_info "Cloning Powerlevel10k theme..."
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
-    log_success "Powerlevel10k theme cloned."
-else
-    log_info "Powerlevel10k theme already present."
-fi
-
-# Plugins: zsh-autosuggestions
-if [ ! -d "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" ]; then
-    log_info "Cloning zsh-autosuggestions plugin..."
-    git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM}/plugins/zsh-autosuggestions"
-    log_success "zsh-autosuggestions plugin cloned."
-else
-    log_info "zsh-autosuggestions plugin already present."
-fi
-
-# Plugins: zsh-syntax-highlighting
-if [ ! -d "${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting" ]; then
-    log_info "Cloning zsh-syntax-highlighting plugin..."
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting"
-    log_success "zsh-syntax-highlighting plugin cloned."
-else
-    log_info "zsh-syntax-highlighting plugin already present."
-fi
-
-# Plugins: fzf-tab
-if [ ! -d "${ZSH_CUSTOM}/plugins/fzf-tab" ]; then
-    log_info "Cloning fzf-tab plugin..."
-    git clone https://github.com/Aloxaf/fzf-tab "${ZSH_CUSTOM}/plugins/fzf-tab"
-    log_success "fzf-tab plugin cloned."
-else
-    log_info "fzf-tab plugin already present."
-fi
-
-# 4. Rust Toolchain Setup
-if ! command_exists rustup; then
-    echo -e -n "${YELLOW}[QUESTION]${NC} Rust/rustup not found. Would you like to install it? (y/n) "
-    read -r install_rust
-    if [[ "$install_rust" =~ ^[Yy]$ ]]; then
-        log_info "Installing Rust via rustup..."
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        # Source cargo environment for the current process
-        source "$HOME/.cargo/env"
-        log_success "Rust installed successfully."
+# Clone a plugin or theme if it is not already present
+# Usage: clone_repo <name> <url> <destination>
+clone_repo() {
+    local name="$1"
+    local url="$2"
+    local dest="$3"
+    if [ ! -d "$dest" ]; then
+        log_info "Cloning $name..."
+        git clone --depth=1 "$url" "$dest"
+        log_success "$name cloned."
     else
-        log_warning "Skipping Rust installation."
+        log_info "$name already present."
     fi
+}
+
+clone_repo "Powerlevel10k theme" https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
+clone_repo "zsh-autosuggestions plugin" https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM}/plugins/zsh-autosuggestions"
+clone_repo "zsh-syntax-highlighting plugin" https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting"
+clone_repo "fzf-tab plugin" https://github.com/Aloxaf/fzf-tab "${ZSH_CUSTOM}/plugins/fzf-tab"
+
+# 4. MesloLGS NF font (required by Powerlevel10k, Alacritty and eza icons)
+if [ "$(uname)" = "Darwin" ]; then
+    FONT_DIR="$HOME/Library/Fonts"
 else
-    log_info "Rust/rustup is already installed."
+    FONT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fonts"
+fi
+FONT_URL="https://github.com/romkatv/powerlevel10k-media/raw/master"
+mkdir -p "$FONT_DIR"
+fonts_added=0
+for style in Regular Bold Italic "Bold Italic"; do
+    font_file="MesloLGS NF ${style}.ttf"
+    if [ ! -f "$FONT_DIR/$font_file" ]; then
+        log_info "Downloading $font_file..."
+        curl -fsSL -o "$FONT_DIR/$font_file" "$FONT_URL/${font_file// /%20}"
+        fonts_added=1
+    fi
+done
+if [ "$fonts_added" -eq 1 ]; then
+    if command_exists fc-cache; then
+        fc-cache -f "$FONT_DIR" >/dev/null
+    fi
+    log_success "MesloLGS NF font installed."
+else
+    log_info "MesloLGS NF font already installed."
 fi
 
 # 5. Bat command Setup
 if ! command_exists bat && ! command_exists batcat; then
-    echo -e -n "${YELLOW}[QUESTION]${NC} bat command not found. Would you like to install it? (y/n) "
-    read -r install_bat
-    if [[ "$install_bat" =~ ^[Yy]$ ]]; then
-        if command_exists cargo; then
-            log_info "Installing bat via Cargo..."
-            cargo install bat
-            log_success "bat installed via Cargo."
-        else
-            log_warning "Cargo not found. Please install bat manually or install Rust first."
-        fi
+    if ask "bat command not found. Would you like to install it?"; then
+        install_tool bat bat || true
     fi
 else
     log_info "bat command is already installed."
@@ -160,16 +251,8 @@ fi
 
 # 6. Eza command Setup
 if ! command_exists eza; then
-    echo -e -n "${YELLOW}[QUESTION]${NC} eza command not found. Would you like to install it? (y/n) "
-    read -r install_eza
-    if [[ "$install_eza" =~ ^[Yy]$ ]]; then
-        if command_exists cargo; then
-            log_info "Installing eza via Cargo..."
-            cargo install eza
-            log_success "eza installed via Cargo."
-        else
-            log_warning "Cargo not found. Please install eza manually or install Rust first."
-        fi
+    if ask "eza command not found. Would you like to install it?"; then
+        install_tool eza eza || true
     fi
 else
     log_info "eza command is already installed."
@@ -177,23 +260,14 @@ fi
 
 # 7. Tealdeer command Setup
 if ! command_exists tldr; then
-    echo -e -n "${YELLOW}[QUESTION]${NC} tldr command (tealdeer) not found. Would you like to install it? (y/n) "
-    read -r install_tealdeer
-    if [[ "$install_tealdeer" =~ ^[Yy]$ ]]; then
-        if command_exists cargo; then
-            log_info "Installing tealdeer via Cargo..."
-            cargo install tealdeer
-            log_success "tealdeer installed via Cargo."
+    if ask "tldr command (tealdeer) not found. Would you like to install it?"; then
+        if install_tool tealdeer tealdeer; then
             log_info "Updating tldr cache..."
             if command_exists tldr; then
                 tldr --update || log_warning "Failed to update tldr cache."
-            elif [ -f "$HOME/.cargo/bin/tldr" ]; then
-                "$HOME/.cargo/bin/tldr" --update || log_warning "Failed to update tldr cache."
             else
-                log_warning "tldr executable not found in PATH or ~/.cargo/bin/ to update cache."
+                log_warning "tldr executable not found in PATH to update cache."
             fi
-        else
-            log_warning "Cargo not found. Please install tealdeer manually or install Rust first."
         fi
     fi
 else
@@ -202,28 +276,23 @@ fi
 
 # 8. Alacritty Setup
 if ! command_exists alacritty; then
-    log_warning "Alacritty is not installed. You can install it via:"
-    log_warning " - Debian/Ubuntu: sudo apt install alacritty"
-    log_warning " - Arch Linux: sudo pacman -S alacritty"
-    log_warning " - Cargo (Rust): cargo install alacritty"
+    if ask "Alacritty is not installed. Would you like to install it?"; then
+        install_tool alacritty alacritty || true
+    fi
 else
     log_info "Alacritty is already installed."
 fi
 
 # 9. fzf Setup
 if ! command_exists fzf; then
-    echo -e -n "${YELLOW}[QUESTION]${NC} fzf command not found. Would you like to install it? (y/n) "
-    read -r install_fzf
-    if [[ "$install_fzf" =~ ^[Yy]$ ]]; then
-        if [ ! -d "$HOME/.fzf" ]; then
-            log_info "Cloning fzf repository..."
-            git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+    if ask "fzf command not found. Would you like to install it?"; then
+        if [ -n "$PKG_MANAGER" ] && pkg_install fzf; then
+            log_success "fzf installed via $PKG_MANAGER."
+        else
+            clone_repo "fzf repository" https://github.com/junegunn/fzf.git "$HOME/.fzf"
             log_info "Installing fzf binary..."
             "$HOME/.fzf/install" --bin
             log_success "fzf installed successfully."
-        else
-            log_info "fzf repository already present. Running install script..."
-            "$HOME/.fzf/install" --bin
         fi
     fi
 else
@@ -234,6 +303,7 @@ fi
 echo ""
 log_info "Configuring symlinks..."
 
+create_symlink "${DOTFILES_DIR}/zsh/zshenv" "${HOME}/.zshenv"
 create_symlink "${DOTFILES_DIR}/zsh/zshrc" "${HOME}/.zshrc"
 create_symlink "${DOTFILES_DIR}/zsh/p10k.zsh" "${HOME}/.p10k.zsh"
 create_symlink "${DOTFILES_DIR}/alacritty/alacritty.toml" "${HOME}/.config/alacritty/alacritty.toml"
@@ -241,4 +311,4 @@ create_symlink "${DOTFILES_DIR}/bat/config" "${HOME}/.config/bat/config"
 
 echo ""
 log_success "Dotfiles configuration completed successfully!"
-log_info "Please restart your terminal or run: source ~/.zshrc"
+log_info "Please restart your terminal or run: exec zsh"

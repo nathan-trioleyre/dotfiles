@@ -1,0 +1,8 @@
+# Loaded by every zsh instance, interactive or not: keep it to environment variables.
+
+# Rust toolchain (rustup is installed with --no-modify-path, see install.sh)
+[[ ! -f "$HOME/.cargo/env" ]] || . "$HOME/.cargo/env"
+
+# User binaries, without duplicates
+typeset -U path
+path=("$HOME/.local/bin" $path)

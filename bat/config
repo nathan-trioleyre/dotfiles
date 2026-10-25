@@ -1,8 +1,8 @@
 # bat configuration file
 # For more info: bat --help or https://github.com/sharkdp/bat
 
-# Set the theme. Run `bat --list-themes` to see available themes.
---theme="TwoDark"
+# Use the terminal palette (Snazzy, see alacritty.toml). Run `bat --list-themes` for others.
+--theme="ansi"
 
 # Show line numbers, git status modifications, and file headers.
 --style="numbers,changes,header"
