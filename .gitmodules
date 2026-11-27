@@ -1,0 +1,6 @@
+[submodule "claude/claude-kit"]
+	path = claude/claude-kit
+	url = https://github.com/nathan-trioleyre/claude-kit.git
+[submodule "claude/subagent-tiering"]
+	path = claude/subagent-tiering
+	url = https://github.com/nathan-trioleyre/subagent-tiering.git

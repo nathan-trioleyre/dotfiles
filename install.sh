@@ -336,6 +336,35 @@ if [ "${XDG_CURRENT_DESKTOP:-}" = "COSMIC" ] || [ -d "${HOME}/.config/cosmic" ];
     create_symlink "${DOTFILES_DIR}/cosmic/custom" "${HOME}/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom"
 fi
 
+# 12. Claude Code Setup (claude-kit + subagent-tiering submodules)
+if ask "Would you like to install Claude Code workflows (claude-kit + subagent-tiering)?"; then
+    log_info "Initializing Claude Code submodules..."
+    git -C "$DOTFILES_DIR" submodule update --init --recursive --remote || log_warning "Could not update submodules from remote; using pinned commits."
+
+    PY_CMD=""
+    if command_exists python3; then
+        PY_CMD="python3"
+    elif command_exists python; then
+        PY_CMD="python"
+    elif [ -n "$PKG_MANAGER" ] && ask "Python 3 is required for Claude Code tools. Install it?" && pkg_install python3; then
+        PY_CMD="python3"
+    fi
+
+    if [ -n "$PY_CMD" ]; then
+        if [ -f "${DOTFILES_DIR}/claude/claude-kit/install.py" ]; then
+            log_info "Installing claude-kit (--link)..."
+            "$PY_CMD" "${DOTFILES_DIR}/claude/claude-kit/install.py" --link
+        fi
+        if [ -f "${DOTFILES_DIR}/claude/subagent-tiering/install.sh" ]; then
+            log_info "Installing subagent-tiering..."
+            "${DOTFILES_DIR}/claude/subagent-tiering/install.sh"
+        fi
+        log_success "Claude Code workflows installed."
+    else
+        log_warning "Python 3 not found: skipping Claude Code setup."
+    fi
+fi
+
 echo ""
 log_success "Dotfiles configuration completed successfully!"
 log_info "Please restart your terminal or run: exec zsh"

@@ -11,6 +11,9 @@
   - [tealdeer](https://github.com/dbrgn/tealdeer) (A fast, offline implementation of `tldr` in Rust)
   - [fzf](https://github.com/junegunn/fzf) (Fuzzy finder)
   - [nvm](https://github.com/nvm-sh/nvm) (Node.js version manager, loaded by the Oh My Zsh `nvm` plugin)
+- **Claude Code (Git Submodules):**
+  - [claude-kit](https://github.com/nathan-trioleyre/claude-kit) (per-project Claude Code setup, stack profiles, hooks)
+  - [subagent-tiering](https://github.com/nathan-trioleyre/subagent-tiering) (global sub-agent model tiering and token economy)
 
 ---
 
@@ -50,7 +53,7 @@ The script is idempotent: running it again only does what is missing.
 ./update.sh
 ```
 
-Updates Oh My Zsh, the custom plugins and theme, and the tldr cache.
+Updates Oh My Zsh, the custom plugins and theme, the tldr cache, and pulls the latest commits for the `claude-kit` and `subagent-tiering` submodules (refreshing their `~/.claude` installations if already installed).
 
 ---
 
@@ -64,6 +67,9 @@ dotfiles/
 │   └── alacritty.toml       # Alacritty configuration (font, colors, window)
 ├── bat/
 │   └── config               # bat configuration (theme, style, etc.)
+├── claude/
+│   ├── claude-kit/          # Git submodule -> nathan-trioleyre/claude-kit
+│   └── subagent-tiering/    # Git submodule -> nathan-trioleyre/subagent-tiering
 ├── cosmic/
 │   ├── custom               # COSMIC custom shortcuts (Super+L locks the session)
 │   └── system_actions       # COSMIC system actions (Super+T opens Alacritty)
